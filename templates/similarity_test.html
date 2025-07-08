@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Semantic Similarity Test - JobSync{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-brain me-2"></i>
+                        Semantic Similarity Test - TF-IDF & Cosine Similarity
+                    </h4>
+                    <small>Test the advanced skill matching algorithm using TF-IDF vectorization and cosine similarity</small>
+                </div>
+                <div class="card-body">
+                    <form id="similarityForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="jobSkills" class="form-label">
+                                        <i class="fas fa-briefcase me-1"></i>Job Requirements/Skills
+                                    </label>
+                                    <textarea class="form-control" id="jobSkills" rows="6" 
+                                              placeholder="Enter job skills and requirements...
+Example: Python, Machine Learning, TensorFlow, Data Science, SQL, API Development, React, JavaScript">Python, Machine Learning, TensorFlow, Data Science, SQL, API Development, React, JavaScript</textarea>
+                                    <div class="form-text">Enter skills, technologies, and requirements for the job position</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="candidateSkills" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Candidate Skills
+                                    </label>
+                                    <textarea class="form-control" id="candidateSkills" rows="6" 
+                                              placeholder="Enter candidate skills...
+Example: Python, ML, Scikit-learn, Pandas, MySQL, REST APIs, Vue.js, TypeScript">Python, ML, Scikit-learn, Pandas, MySQL, REST APIs, Vue.js, TypeScript</textarea>
+                                    <div class="form-text">Enter the candidate's skills and experience</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calculator me-2"></i>Calculate Semantic Similarity
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div id="results" style="display: none;">
+                        <hr>
+                        <h5><i class="fas fa-chart-line me-2"></i>Similarity Analysis Results</h5>
+                        
+                        <!-- Compatibility Score -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h2 id="compatibilityScore" class="text-primary mb-0">0%</h2>
+                                        <small class="text-muted">Semantic Similarity Score</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="progress" style="height: 30px;">
+                                    <div id="compatibilityBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%">
+                                        <span id="compatibilityText">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Match Breakdown -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-pie-chart me-2"></i>Match Breakdown</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row" id="matchBreakdown">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skill Analysis -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Exact Matches</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="exactMatches">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0"><i class="fas fa-brain me-2"></i>Semantic Matches</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="semanticMatches">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-white">
+                                        <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Missing Skills</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="missingSkills">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TF-IDF Analysis -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-microscope me-2"></i>TF-IDF Analysis</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Job Key Terms</h6>
+                                                <div id="jobKeyTerms"></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Candidate Key Terms</h6>
+                                                <div id="candidateKeyTerms"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <small class="text-muted">
+                                                <strong>Processed Job Skills:</strong> <span id="processedJobSkills"></span><br>
+                                                <strong>Processed Candidate Skills:</strong> <span id="processedCandidateSkills"></span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#similarityForm').submit(function(e) {
+        e.preventDefault();
+        
+        const jobSkills = $('#jobSkills').val().trim();
+        const candidateSkills = $('#candidateSkills').val().trim();
+        
+        if (!jobSkills || !candidateSkills) {
+            alert('Please enter both job skills and candidate skills');
+            return;
+        }
+        
+        // Show loading
+        $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Calculating...');
+        
+        // Make API call
+        $.ajax({
+            url: '/api/test_similarity',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                job_skills: jobSkills,
+                candidate_skills: candidateSkills
+            }),
+            success: function(response) {
+                displayResults(response);
+                $('#results').show();
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.error || 'Failed to calculate similarity'));
+            },
+            complete: function() {
+                $('button[type="submit"]').prop('disabled', false).html('<i class="fas fa-calculator me-2"></i>Calculate Semantic Similarity');
+            }
+        });
+    });
+});
+
+function displayResults(response) {
+    const score = response.compatibility_score;
+    const details = response.details;
+    
+    // Update compatibility score
+    $('#compatibilityScore').text(score + '%');
+    $('#compatibilityText').text(score + '%');
+    $('#compatibilityBar').css('width', score + '%');
+    
+    // Color code the progress bar
+    const progressBar = $('#compatibilityBar');
+    progressBar.removeClass('bg-danger bg-warning bg-info bg-success');
+    if (score < 30) {
+        progressBar.addClass('bg-danger');
+    } else if (score < 60) {
+        progressBar.addClass('bg-warning');
+    } else if (score < 80) {
+        progressBar.addClass('bg-info');
+    } else {
+        progressBar.addClass('bg-success');
+    }
+    
+    // Match breakdown
+    const breakdown = details.match_breakdown;
+    $('#matchBreakdown').html(`
+        <div class="col-md-3 text-center">
+            <h4 class="text-success">${breakdown.exact_matches}</h4>
+            <small>Exact Matches</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <h4 class="text-info">${breakdown.semantic_matches}</h4>
+            <small>Semantic Matches</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <h4 class="text-warning">${breakdown.missing_skills}</h4>
+            <small>Missing Skills</small>
+        </div>
+        <div class="col-md-3 text-center">
+            <h4 class="text-primary">${Math.round(breakdown.coverage_percentage)}%</h4>
+            <small>Coverage</small>
+        </div>
+    `);
+    
+    // Exact matches
+    $('#exactMatches').html(
+        details.matched.length > 0 
+            ? details.matched.map(skill => `<span class="badge bg-success me-1 mb-1">${skill}</span>`).join('')
+            : '<small class="text-muted">No exact matches found</small>'
+    );
+    
+    // Semantic matches
+    $('#semanticMatches').html(
+        details.semantic_matches.length > 0
+            ? details.semantic_matches.map(match => 
+                `<div class="mb-1">
+                    <small><strong>${match.required}</strong> ↔ <em>${match.candidate}</em></small>
+                </div>`
+              ).join('')
+            : '<small class="text-muted">No semantic matches found</small>'
+    );
+    
+    // Missing skills
+    $('#missingSkills').html(
+        details.missing.length > 0
+            ? details.missing.map(skill => `<span class="badge bg-warning me-1 mb-1">${skill}</span>`).join('')
+            : '<small class="text-muted">No missing skills</small>'
+    );
+    
+    // TF-IDF analysis
+    const semantic = details.semantic_analysis;
+    if (semantic.job_key_terms) {
+        $('#jobKeyTerms').html(
+            semantic.job_key_terms.map(([term, score]) => 
+                `<span class="badge bg-light text-dark me-1 mb-1" title="TF-IDF: ${score.toFixed(3)}">${term}</span>`
+            ).join('')
+        );
+    }
+    
+    if (semantic.candidate_key_terms) {
+        $('#candidateKeyTerms').html(
+            semantic.candidate_key_terms.map(([term, score]) => 
+                `<span class="badge bg-light text-dark me-1 mb-1" title="TF-IDF: ${score.toFixed(3)}">${term}</span>`
+            ).join('')
+        );
+    }
+    
+    // Processed skills
+    $('#processedJobSkills').text(response.job_skills_processed);
+    $('#processedCandidateSkills').text(response.candidate_skills_processed);
+}
+</script>
+{% endblock %}

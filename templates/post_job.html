@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Post Job - JobSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-plus me-2"></i>Post New Job
+        </h1>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-briefcase me-2"></i>Job Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="jobForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Job Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location *</label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       placeholder="City, State" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Job Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="5"
+                                  placeholder="Describe the role, responsibilities, and what you're looking for..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="requirements" class="form-label">Requirements *</label>
+                        <textarea class="form-control" id="requirements" name="requirements" rows="4"
+                                  placeholder="List the qualifications, experience, and requirements..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="skills" class="form-label">Required Skills *</label>
+                        <input type="text" class="form-control" id="skills" name="skills"
+                               placeholder="JavaScript, React, Node.js, Python" required>
+                        <div class="form-text">Enter skills separated by commas. These will be used for candidate matching.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="salary" class="form-label">Salary Range</label>
+                                <input type="text" class="form-control" id="salary" name="salary"
+                                       placeholder="CFA 500,000 - CFA 700,000">
+                                <div class="form-text">Optional: Specify salary range in CFA or "Competitive"</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="job_type" class="form-label">Job Type *</label>
+                                <select class="form-select" id="job_type" name="job_type" required>
+                                    <option value="">Select job type</option>
+                                    <option value="full-time">Full Time</option>
+                                    <option value="part-time">Part Time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="internship">Internship</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Post Job
+                        </button>
+                        <a href="{{ url_for('employer_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Job Preview -->
+        <div class="card mt-4" id="jobPreview" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>Job Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <h5 id="previewTitle">Job Title</h5>
+                <h6 class="text-muted" id="previewCompany">{{ session.get('company_name', session.username) }}</h6>
+
+                <div class="mb-3">
+                    <span class="badge bg-light text-dark me-2" id="previewLocation">
+                        <i class="fas fa-map-marker-alt me-1"></i>Location
+                    </span>
+                    <span class="badge bg-light text-dark me-2" id="previewType">
+                        <i class="fas fa-clock me-1"></i>Job Type
+                    </span>
+                    <span class="badge bg-light text-dark" id="previewSalary" style="display: none;">
+                        <i class="fas fa-money-bill me-1"></i>Salary
+                    </span>
+                </div>
+
+                <p id="previewDescription">Job description will appear here...</p>
+
+                <div class="mb-3">
+                    <strong>Requirements:</strong>
+                    <p id="previewRequirements" class="text-muted">Requirements will appear here...</p>
+                </div>
+
+                <div>
+                    <strong>Required Skills:</strong>
+                    <div id="previewSkills" class="mt-1">
+                        <!-- Skills will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Real-time preview
+    function updatePreview() {
+        const title = $('#title').val();
+        const location = $('#location').val();
+        const description = $('#description').val();
+        const requirements = $('#requirements').val();
+        const skills = $('#skills').val();
+        const salary = $('#salary').val();
+        const jobType = $('#job_type').val();
+
+        if (title || location || description) {
+            $('#jobPreview').show();
+
+            $('#previewTitle').text(title || 'Job Title');
+            $('#previewLocation').html('<i class="fas fa-map-marker-alt me-1"></i>' + (location || 'Location'));
+            $('#previewDescription').text(description || 'Job description will appear here...');
+            $('#previewRequirements').text(requirements || 'Requirements will appear here...');
+
+            if (jobType) {
+                $('#previewType').html('<i class="fas fa-clock me-1"></i>' + jobType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+            }
+
+            if (salary) {
+                $('#previewSalary').html('<i class="fas fa-money-bill me-1"></i>' + salary).show();
+            } else {
+                $('#previewSalary').hide();
+            }
+
+            // Update skills
+            const skillsContainer = $('#previewSkills');
+            skillsContainer.empty();
+
+            if (skills) {
+                const skillsList = skills.split(',');
+                skillsList.forEach(skill => {
+                    const trimmedSkill = skill.trim();
+                    if (trimmedSkill) {
+                        skillsContainer.append(`<span class="skill-tag">${trimmedSkill}</span>`);
+                    }
+                });
+            }
+        } else {
+            $('#jobPreview').hide();
+        }
+    }
+
+    // Bind preview update to form inputs
+    $('#title, #location, #description, #requirements, #skills, #salary, #job_type').on('input change', updatePreview);
+
+    // Character counters
+    $('textarea').each(function() {
+        const $this = $(this);
+        const maxLength = $this.attr('id') === 'description' ? 2000 : 1000;
+        const $counter = $('<div class="form-text text-end mt-1"></div>');
+
+        $this.after($counter);
+
+        function updateCounter() {
+            const length = $this.val().length;
+            $counter.text(`${length}/${maxLength} characters`);
+
+            if (length > maxLength * 0.9) {
+                $counter.addClass('text-warning');
+            } else {
+                $counter.removeClass('text-warning');
+            }
+
+            if (length > maxLength) {
+                $counter.addClass('text-danger').removeClass('text-warning');
+            } else {
+                $counter.removeClass('text-danger');
+            }
+        }
+
+        $this.on('input', updateCounter);
+        updateCounter();
+    });
+
+    // Skills validation
+    $('#skills').on('input', function() {
+        const skills = $(this).val().split(',');
+        const skillCount = skills.filter(skill => skill.trim().length > 0).length;
+
+        if (skillCount > 15) {
+            $(this).addClass('is-invalid');
+            if (!$(this).next('.invalid-feedback').length) {
+                $(this).after('<div class="invalid-feedback">Please limit to 15 skills maximum for better matching.</div>');
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+
+    // Form validation
+    $('#jobForm').submit(function(e) {
+        let isValid = true;
+
+        // Check required fields
+        $('input[required], textarea[required], select[required]').each(function() {
+            if (!$(this).val().trim()) {
+                isValid = false;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Check skills count
+        const skills = $('#skills').val().split(',').filter(skill => skill.trim().length > 0);
+        if (skills.length > 15) {
+            isValid = false;
+            alert('Please limit your required skills to 15 maximum.');
+        }
+
+        // Check textarea lengths
+        if ($('#description').val().length > 2000) {
+            isValid = false;
+            alert('Job description must be under 2000 characters.');
+        }
+
+        if ($('#requirements').val().length > 1000) {
+            isValid = false;
+            alert('Requirements must be under 1000 characters.');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+
+    // Auto-save to localStorage
+    const formFields = ['title', 'location', 'description', 'requirements', 'skills', 'salary', 'job_type'];
+
+    // Load saved data
+    formFields.forEach(field => {
+        const saved = localStorage.getItem('jobForm_' + field);
+        if (saved) {
+            $('#' + field).val(saved);
+        }
+    });
+
+    // Save data on input
+    formFields.forEach(field => {
+        $('#' + field).on('input change', function() {
+            localStorage.setItem('jobForm_' + field, $(this).val());
+        });
+    });
+
+    // Clear saved data on successful submit
+    $('#jobForm').on('submit', function() {
+        formFields.forEach(field => {
+            localStorage.removeItem('jobForm_' + field);
+        });
+    });
+
+    // Initial preview update
+    updatePreview();
+});
+</script>
+{% endblock %}

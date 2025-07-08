@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}SuperChat - JobSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-comments me-2"></i>SuperChat
+            <small class="text-muted">Connect with jobseekers and employers in real-time</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chat Messages -->
+    <div class="col-lg-9 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>Messages
+                </h5>
+                <div>
+                    <span class="badge bg-success" id="onlineStatus">
+                        <i class="fas fa-circle me-1"></i>Online
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="refreshMessages()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="chat-container" id="messagesContainer">
+                {% for message in messages %}
+                <div class="message {% if message.user_id == session.user_id %}own{% else %}other{% endif %}">
+                    {% if message.user_id != session.user_id %}
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="me-2">{{ message.username }}</strong>
+                        <span class="user-type-badge user-type-{{ message.user_type }}">
+                            {{ message.user_type }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <p class="mb-1">{{ message.message }}</p>
+
+                    <small class="text-muted">
+                        {{ message.timestamp.split(' ')[1][:5] if message.timestamp else 'Now' }}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Message Input -->
+            <div class="card-footer">
+                <form id="messageForm" class="d-flex gap-2">
+                    <input type="text"
+                           class="form-control"
+                           id="messageInput"
+                           placeholder="Type your message..."
+                           maxlength="500"
+                           autocomplete="off">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Press Enter to send • <span id="charCount">0</span>/500 characters
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Users Sidebar -->
+    <div class="col-lg-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Online Users
+                    <span class="badge bg-primary ms-2" id="onlineCount">0</span>
+                </h6>
+            </div>
+            <div class="card-body" id="onlineUsers">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                    <div>
+                        <strong>{{ session.username }}</strong> (You)
+                        <br>
+                        <small class="user-type-badge user-type-{{ session.user_type }}">
+                            {{ session.user_type }}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="text-muted">
+                    <small>Other users will appear here when they join the chat</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Guidelines -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Chat Guidelines
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <small>Be respectful and professional</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <small>Keep conversations job-related</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <small>No spam or inappropriate content</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <small>Help others and share knowledge</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lastMessageId = 0;
+let refreshInterval;
+
+$(document).ready(function() {
+    // Initialize chat
+    scrollToBottom();
+    startAutoRefresh();
+
+    // Character counter
+    $('#messageInput').on('input', function() {
+        const length = $(this).val().length;
+        $('#charCount').text(length);
+
+        if (length > 450) {
+            $('#charCount').addClass('text-warning');
+        } else {
+            $('#charCount').removeClass('text-warning');
+        }
+    });
+
+    // Send message on form submit
+    $('#messageForm').submit(function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+
+    // Send message on Enter key
+    $('#messageInput').keypress(function(e) {
+        if (e.which === 13 && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Focus on message input
+    $('#messageInput').focus();
+});
+
+function sendMessage() {
+    const message = $('#messageInput').val().trim();
+    if (!message) return;
+
+    // Disable input while sending
+    $('#messageInput').prop('disabled', true);
+    $('button[type="submit"]').prop('disabled', true);
+
+    $.ajax({
+        url: '{{ url_for("send_message") }}',
+        method: 'POST',
+        data: { message: message },
+        success: function(response) {
+            if (response.success) {
+                $('#messageInput').val('');
+                $('#charCount').text('0');
+                refreshMessages();
+            }
+        },
+        error: function() {
+            alert('Failed to send message. Please try again.');
+        },
+        complete: function() {
+            // Re-enable input
+            $('#messageInput').prop('disabled', false);
+            $('button[type="submit"]').prop('disabled', false);
+            $('#messageInput').focus();
+        }
+    });
+}
+
+function refreshMessages() {
+    $.ajax({
+        url: '{{ url_for("get_messages") }}',
+        method: 'GET',
+        success: function(messages) {
+            updateMessages(messages);
+        },
+        error: function() {
+            console.log('Failed to refresh messages');
+        }
+    });
+}
+
+function updateMessages(messages) {
+    const container = $('#messagesContainer');
+    const currentUserId = {{ session.user_id }};
+
+    // Clear existing messages
+    container.empty();
+
+    // Add new messages
+    messages.forEach(function(message) {
+        const isOwn = message.user_id === currentUserId;
+        const messageClass = isOwn ? 'own' : 'other';
+
+        let messageHtml = `<div class="message ${messageClass}">`;
+
+        if (!isOwn) {
+            messageHtml += `
+                <div class="d-flex align-items-center mb-2">
+                    <strong class="me-2">${message.username}</strong>
+                    <span class="user-type-badge user-type-${message.user_type}">
+                        ${message.user_type}
+                    </span>
+                </div>
+            `;
+        }
+
+        messageHtml += `
+            <p class="mb-1">${escapeHtml(message.message)}</p>
+            <small class="text-muted">
+                ${formatTime(message.timestamp)}
+            </small>
+        </div>`;
+
+        container.append(messageHtml);
+    });
+
+    scrollToBottom();
+}
+
+function scrollToBottom() {
+    const container = $('#messagesContainer');
+    container.scrollTop(container[0].scrollHeight);
+}
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(refreshMessages, 3000); // Refresh every 3 seconds
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+function formatTime(timestamp) {
+    if (!timestamp) return 'Now';
+    const time = timestamp.split(' ')[1];
+    return time ? time.substring(0, 5) : 'Now';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Handle page visibility change
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopAutoRefresh();
+        $('#onlineStatus').removeClass('bg-success').addClass('bg-warning').html('<i class="fas fa-circle me-1"></i>Away');
+    } else {
+        startAutoRefresh();
+        $('#onlineStatus').removeClass('bg-warning').addClass('bg-success').html('<i class="fas fa-circle me-1"></i>Online');
+        refreshMessages();
+    }
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}

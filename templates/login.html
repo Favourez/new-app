@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Login - JobSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header text-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-sign-in-alt me-2"></i>Welcome Back
+                </h3>
+                <p class="text-muted mb-0">Sign in to your account</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="loginForm">
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Remember me
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="mb-2">
+                        <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                            <i class="fas fa-key me-1"></i>Forgot your password?
+                        </a>
+                    </p>
+                    <p class="text-muted">
+                        Don't have an account?
+                        <a href="{{ url_for('register') }}" class="text-decoration-none">
+                            Sign up here
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Accounts -->
+        <div class="card mt-3 border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Demo Accounts
+                </h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <strong>Jobseeker Demo:</strong><br>
+                    Email: jobseeker@demo.com<br>
+                    Password: demo123<br><br>
+
+                    <strong>Employer Demo:</strong><br>
+                    Email: employer@demo.com<br>
+                    Password: demo123
+                </small>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="fillDemo('jobseeker')">
+                        Use Jobseeker Demo
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="fillDemo('employer')">
+                        Use Employer Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="forgotPasswordModalLabel">
+                    <i class="fas fa-key me-2"></i>Reset Your Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Enter your email address and we'll send you instructions to reset your password using Firebase Authentication.
+                </div>
+
+                <form id="forgotPasswordForm">
+                    <div class="mb-3">
+                        <label for="resetEmail" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" id="resetEmail" name="resetEmail"
+                                   placeholder="Enter your email address" required>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            We'll send a secure reset link to this email address.
+                        </div>
+                    </div>
+
+                    <div id="resetMessage" class="alert" style="display: none;"></div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="resetPasswordBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Send Reset Instructions
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Note:</strong> Check your spam folder if you don't receive the email within a few minutes.
+                        The reset link will expire in 1 hour for security.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Firebase SDK v9+ -->
+<script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBGI5FiqCAEYauz1cP_nSzo9lHCffxeIcU",
+        authDomain: "jobportal-b622b.firebaseapp.com",
+        databaseURL: "https://jobportal-b622b-default-rtdb.firebaseio.com",
+        projectId: "jobportal-b622b",
+        storageBucket: "jobportal-b622b.firebasestorage.app",
+        messagingSenderId: "736881486152",
+        appId: "1:736881486152:web:67c5cee14c0d0d9b0aab7d",
+        measurementId: "G-HN3PDEMPP0"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Make Firebase available globally for other scripts
+    window.firebaseAuth = auth;
+    window.sendPasswordResetEmail = sendPasswordResetEmail;
+</script>
+
+<script>
+
+$(document).ready(function() {
+    // Toggle password visibility
+    $('#togglePassword').click(function() {
+        const passwordField = $('#password');
+        const icon = $(this).find('i');
+
+        if (passwordField.attr('type') === 'password') {
+            passwordField.attr('type', 'text');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            passwordField.attr('type', 'password');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+
+    // Form validation
+    $('#loginForm').submit(function(e) {
+        const email = $('#email').val().trim();
+        const password = $('#password').val();
+
+        if (email === '') {
+            e.preventDefault();
+            alert('Please enter your email address.');
+            $('#email').focus();
+            return false;
+        }
+
+        if (password === '') {
+            e.preventDefault();
+            alert('Please enter your password.');
+            $('#password').focus();
+            return false;
+        }
+    });
+
+    // Forgot Password Form Handler
+    $('#forgotPasswordForm').submit(function(e) {
+        e.preventDefault();
+
+        const email = $('#resetEmail').val().trim();
+        const resetBtn = $('#resetPasswordBtn');
+        const messageDiv = $('#resetMessage');
+
+        if (!email) {
+            showResetMessage('Please enter your email address.', 'danger');
+            return;
+        }
+
+        // Show loading state
+        resetBtn.prop('disabled', true);
+        resetBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Sending...');
+        messageDiv.hide();
+
+        // Send password reset email using Firebase Authentication
+        if (window.firebaseAuth && window.sendPasswordResetEmail) {
+            window.sendPasswordResetEmail(window.firebaseAuth, email)
+                .then(() => {
+                    // Password reset email sent successfully
+                    showResetMessage(
+                        `Password reset instructions have been sent to ${email}. Please check your email (including spam folder) and follow the instructions to reset your password.`,
+                        'success'
+                    );
+                    $('#resetEmail').val('');
+
+                    // Auto-close modal after 5 seconds
+                    setTimeout(() => {
+                        $('#forgotPasswordModal').modal('hide');
+                    }, 5000);
+                })
+                .catch((error) => {
+                    // Handle Firebase errors
+                    console.error('Firebase password reset error:', error);
+
+                    let errorMessage = 'An error occurred while sending the reset email.';
+
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = 'No account found with this email address. Please check your email or create a new account.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Please enter a valid email address.';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage = 'Too many reset attempts. Please try again later.';
+                            break;
+                        case 'auth/network-request-failed':
+                            errorMessage = 'Network error. Please check your internet connection and try again.';
+                            break;
+                        default:
+                            errorMessage = error.message || errorMessage;
+                    }
+
+                    showResetMessage(errorMessage, 'danger');
+                })
+                .finally(() => {
+                    // Reset button state
+                    resetBtn.prop('disabled', false);
+                    resetBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Reset Instructions');
+                });
+        } else {
+            // Fallback to backend API if Firebase is not available
+            $.ajax({
+                url: '/forgot_password',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                success: function(response) {
+                    showResetMessage(
+                        `Password reset instructions have been sent to ${email}. Please check your email and follow the instructions to reset your password.`,
+                        'success'
+                    );
+                    $('#resetEmail').val('');
+
+                    // Auto-close modal after 4 seconds
+                    setTimeout(() => {
+                        $('#forgotPasswordModal').modal('hide');
+                    }, 4000);
+                },
+                error: function(xhr) {
+                    console.error('Backend password reset error:', xhr);
+
+                    let errorMessage = 'An error occurred while sending the reset email.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+
+                    showResetMessage(errorMessage, 'danger');
+                },
+                complete: function() {
+                    // Reset button state
+                    resetBtn.prop('disabled', false);
+                    resetBtn.html('<i class="fas fa-paper-plane me-2"></i>Send Reset Instructions');
+                }
+            });
+        }
+    });
+});
+
+// Helper function to show reset messages
+function showResetMessage(message, type) {
+    const messageDiv = $('#resetMessage');
+    messageDiv.removeClass('alert-success alert-danger alert-warning alert-info');
+    messageDiv.addClass(`alert-${type}`);
+    messageDiv.html(`<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>${message}`);
+    messageDiv.show();
+}
+
+// Demo account functions
+function fillDemo(type) {
+    if (type === 'jobseeker') {
+        $('#email').val('jobseeker@demo.com');
+        $('#password').val('demo123');
+    } else if (type === 'employer') {
+        $('#email').val('employer@demo.com');
+        $('#password').val('demo123');
+    }
+}
+</script>
+{% endblock %}

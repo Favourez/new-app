@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Dashboard - JobSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>Welcome back, {{ session.username }}!
+            <span class="user-type-badge user-type-employer ms-2">Employer</span>
+        </h1>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="fas fa-briefcase fa-2x text-primary mb-2"></i>
+                <h3 class="card-title">{{ jobs|length }}</h3>
+                <p class="card-text text-muted">Active Jobs</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                <h3 class="card-title">{{ applications|length }}</h3>
+                <p class="card-text text-muted">Total Applications</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="fas fa-eye fa-2x text-warning mb-2"></i>
+                <h3 class="card-title">
+                    {{ applications|selectattr('status', 'equalto', 'pending')|list|length }}
+                </h3>
+                <p class="card-text text-muted">Pending Reviews</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-plus fa-2x mb-2"></i>
+                            <br>Post New Job
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('jobs') }}" class="btn btn-outline-info btn-lg w-100">
+                            <i class="fas fa-search fa-2x mb-2"></i>
+                            <br>Browse Jobs
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('chat') }}" class="btn btn-outline-success btn-lg w-100">
+                            <i class="fas fa-comments fa-2x mb-2"></i>
+                            <br>SuperChat
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary btn-lg w-100">
+                            <i class="fas fa-user-edit fa-2x mb-2"></i>
+                            <br>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Management -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-briefcase me-2"></i>Your Job Postings
+                </h5>
+                <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Post New Job
+                </a>
+            </div>
+            <div class="card-body">
+                {% if jobs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Job Title</th>
+                                    <th>Location</th>
+                                    <th>Type</th>
+                                    <th>Applications</th>
+                                    <th>Posted Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in jobs %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ job.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ job.description[:50] }}...</small>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ job.location }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ job.job_type.replace('-', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            {{ applications|selectattr('job_id', 'equalto', job.id)|list|length }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ job.posted_at.split(' ')[0] if job.posted_at else 'Recently' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewJobDetails({{ job.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No jobs posted yet</h5>
+                        <p class="text-muted">Create your first job posting to start receiving applications!</p>
+                        <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Post Your First Job
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Recent Applications
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if applications %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Job Title</th>
+                                    <th>Compatibility</th>
+                                    <th>CV/Resume</th>
+                                    <th>Status</th>
+                                    <th>Applied Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications[:10] %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ app.applicant_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ app.applicant_email }}</small>
+                                    </td>
+                                    <td>{{ app.job_title }}</td>
+                                    <td>
+                                        <span class="compatibility-score">
+                                            <i class="fas fa-star me-1"></i>
+                                            {{ app.compatibility_score }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical" role="group">
+                                            <a href="{{ url_for('download_cv', applicant_id=app.applicant_user_id) }}"
+                                               class="btn btn-sm btn-outline-primary mb-1"
+                                               target="_blank">
+                                                <i class="fas fa-download me-1"></i>Download CV
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-info"
+                                                    onclick="viewApplicantProfile({{ app.applicant_user_id }})">
+                                                <i class="fas fa-user me-1"></i>View Profile
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'pending' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>Pending
+                                            </span>
+                                        {% elif app.status == 'accepted' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Accepted
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Rejected
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ app.applied_at.split(' ')[0] if app.applied_at else 'Recently' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'pending' %}
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-success" onclick="updateApplicationStatus({{ app.id }}, 'accepted')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="updateApplicationStatus({{ app.id }}, 'rejected')">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No applications received yet</h5>
+                        <p class="text-muted">Post jobs to start receiving applications from qualified candidates!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewJobDetails(jobId) {
+    // You can implement a modal or redirect to job details page
+    alert('Job details functionality can be implemented here');
+}
+
+function updateApplicationStatus(applicationId, status) {
+    const statusText = status === 'accepted' ? 'accept' : 'reject';
+    const confirmMessage = status === 'accepted'
+        ? 'Are you sure you want to ACCEPT this application? The candidate will receive a job offer email.'
+        : 'Are you sure you want to REJECT this application? The candidate will be notified.';
+
+    if (confirm(confirmMessage)) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // Make AJAX call to update status
+        $.ajax({
+            url: '/api/update_application_status',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                application_id: applicationId,
+                status: status
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    const emailStatus = response.email_sent ? ' Email notification sent!' : ' (Email notification failed)';
+
+                    if (status === 'accepted') {
+                        showNotification('success', `🎉 Application accepted!${emailStatus}`);
+                    } else {
+                        showNotification('info', `Application rejected.${emailStatus}`);
+                    }
+
+                    // Reload page after short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showNotification('error', 'Error: ' + response.message);
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
+            },
+            error: function(xhr) {
+                console.error('Error updating application status:', xhr);
+                const errorMessage = xhr.responseJSON?.error || 'Failed to update application status';
+                showNotification('error', 'Error: ' + errorMessage);
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        });
+    }
+}
+
+// Show notification function
+function showNotification(type, message) {
+    // Create notification element
+    const notification = $(`
+        <div class="alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed"
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+
+    // Add to body
+    $('body').append(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.alert('close');
+    }, 5000);
+}
+
+function viewApplicantProfile(applicantId) {
+    // Open applicant profile in a new window
+    window.open(`/applicant_profile/${applicantId}`, '_blank', 'width=800,height=600');
+}
+
+$(document).ready(function() {
+    // Auto-refresh applications every 30 seconds
+    setInterval(function() {
+        // You can implement AJAX refresh here if needed
+    }, 30000);
+});
+</script>
+{% endblock %}

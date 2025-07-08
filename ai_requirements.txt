@@ -1,0 +1,34 @@
+# AI Resume Parser Requirements
+# ============================
+
+# Core ML/NLP Libraries
+spacy>=3.4.0
+scikit-learn>=1.1.0
+numpy>=1.21.0
+pandas>=1.4.0
+
+# Text Processing
+nltk>=3.7
+textblob>=0.17.1
+
+# File Processing
+pdfplumber>=0.7.0
+PyPDF2>=2.10.0
+python-docx>=0.8.11
+
+# Data Generation
+faker>=15.0.0
+
+# Utilities
+tqdm>=4.64.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Optional: Advanced ML (if you want to use transformers)
+# torch>=1.12.0
+# transformers>=4.20.0
+# datasets>=2.0.0
+
+# Development
+jupyter>=1.0.0
+ipython>=8.0.0

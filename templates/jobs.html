@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs - JobSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-search me-2"></i>Find Your Next Opportunity
+            </h1>
+            {% if session.user_type == 'employer' %}
+            <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Post New Job
+            </a>
+            {% endif %}
+        </div>
+        <p class="text-muted mb-4">Discover jobs that match your skills and experience</p>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="searchTerm" class="form-label">Search Jobs</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="searchTerm" placeholder="Job title, skills, keywords...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="locationFilter" class="form-label">Location</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <input type="text" class="form-control" id="locationFilter" placeholder="City, State">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="jobTypeFilter" class="form-label">Job Type</label>
+                        <select class="form-select" id="jobTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="full-time">Full Time</option>
+                            <option value="part-time">Part Time</option>
+                            <option value="contract">Contract</option>
+                            <option value="internship">Internship</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Jobs Count -->
+<div class="row mb-3">
+    <div class="col-12">
+        <p class="text-muted">
+            <span id="jobsCount">{{ jobs|length }}</span> jobs found
+        </p>
+    </div>
+</div>
+
+<!-- Jobs List -->
+<div class="row" id="jobsList">
+    {% if jobs %}
+        {% for job in jobs %}
+        <div class="col-12 mb-4 job-card"
+             data-title="{{ job.title.lower() }}"
+             data-description="{{ job.description.lower() }}"
+             data-skills="{{ job.skills.lower() }}"
+             data-location="{{ job.location.lower() }}"
+             data-type="{{ job.job_type }}">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="card-title mb-2">
+                                <i class="fas fa-briefcase me-2 text-primary"></i>
+                                {{ job.title }}
+                            </h5>
+                            <h6 class="card-subtitle mb-3 text-muted">
+                                <i class="fas fa-building me-1"></i>
+                                {{ job.company_name or job.employer_name }}
+                            </h6>
+
+                            <div class="mb-3">
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ job.location }}
+                                </span>
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ job.job_type.replace('-', ' ').title() }}
+                                </span>
+                                {% if job.salary %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-money-bill me-1"></i>
+                                    {{ job.salary }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            {% if session.user_type == 'jobseeker' and user_profile and user_profile.skills %}
+                                <!-- Advanced Semantic Analysis Section -->
+                                <div class="semantic-analysis-container mb-3"
+                                     data-job-id="{{ job.id }}"
+                                     data-job-skills="{{ job.skills or '' }}"
+                                     data-user-skills="{{ user_profile.skills or '' }}">
+
+                                    <!-- Loading State -->
+                                    <div class="semantic-loading d-flex align-items-center mb-2">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                        <small class="text-muted">Analyzing semantic compatibility...</small>
+                                    </div>
+
+                                    <!-- Results Container -->
+                                    <div class="semantic-results" style="display: none;">
+                                        <!-- Compatibility Score -->
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-bold">
+                                                <i class="fas fa-brain me-1"></i>Semantic Compatibility:
+                                            </span>
+                                            <span class="compatibility-badge badge fs-6">
+                                                <i class="fas fa-star me-1"></i><span class="score-text">0%</span>
+                                            </span>
+                                        </div>
+
+                                        <!-- Progress Bar -->
+                                        <div class="progress mb-2" style="height: 10px;">
+                                            <div class="compatibility-progress progress-bar progress-bar-striped progress-bar-animated"
+                                                 style="width: 0%"></div>
+                                        </div>
+
+                                        <!-- Match Breakdown -->
+                                        <div class="match-breakdown mb-2" style="display: none;">
+                                            <div class="row text-center">
+                                                <div class="col-3">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-check-circle"></i><br>
+                                                        <span class="exact-matches">0</span><br>
+                                                        <small>Exact</small>
+                                                    </small>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-info">
+                                                        <i class="fas fa-brain"></i><br>
+                                                        <span class="semantic-matches">0</span><br>
+                                                        <small>Semantic</small>
+                                                    </small>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i><br>
+                                                        <span class="missing-skills">0</span><br>
+                                                        <small>Missing</small>
+                                                    </small>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-primary">
+                                                        <i class="fas fa-percentage"></i><br>
+                                                        <span class="coverage-percent">0%</span><br>
+                                                        <small>Coverage</small>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Recommendation Alert -->
+                                        <div class="recommendation-alert" style="display: none;">
+                                            <!-- Will be populated by JavaScript -->
+                                        </div>
+
+                                        <!-- Detailed Analysis Toggle -->
+                                        <div class="text-center mt-2">
+                                            <button class="btn btn-outline-info btn-sm toggle-details"
+                                                    data-job-id="{{ job.id }}" style="display: none;">
+                                                <i class="fas fa-chart-line me-1"></i>View Detailed Analysis
+                                            </button>
+                                        </div>
+
+                                        <!-- Detailed Analysis (Hidden by default) -->
+                                        <div class="detailed-analysis mt-3" style="display: none;">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <h6 class="text-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Your Matching Skills
+                                                    </h6>
+                                                    <div class="matched-skills-list">
+                                                        <!-- Populated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h6 class="text-info">
+                                                        <i class="fas fa-brain me-1"></i>Semantic Matches
+                                                    </h6>
+                                                    <div class="semantic-matches-list">
+                                                        <!-- Populated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h6 class="text-warning">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>Skills to Learn
+                                                    </h6>
+                                                    <div class="missing-skills-list">
+                                                        <!-- Populated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <p class="card-text">{{ job.description[:200] }}{% if job.description|length > 200 %}...{% endif %}</p>
+
+                            {% if job.skills %}
+                            <div class="mb-3">
+                                <small class="text-muted fw-bold">Required Skills:</small>
+                                <div class="mt-1">
+                                    {% for skill in job.skills.split(',') %}
+                                        {% set skill_clean = skill.strip() %}
+                                        {% set is_matched = false %}
+                                        {% if session.user_type == 'jobseeker' and user_profile and user_profile.skills %}
+                                            {% for user_skill in user_profile.skills.split(',') %}
+                                                {% if skill_clean.lower() in user_skill.strip().lower() or user_skill.strip().lower() in skill_clean.lower() %}
+                                                    {% set is_matched = true %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        <span class="skill-tag {% if is_matched %}matched{% endif %}">
+                                            {{ skill_clean }}
+                                            {% if is_matched %} ✓{% endif %}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 text-md-end">
+                            {% if session.user_type == 'jobseeker' %}
+                                <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn btn-primary mb-2">
+                                    <i class="fas fa-paper-plane me-2"></i>Apply Now
+                                </a>
+                            {% endif %}
+
+                            <button class="btn btn-outline-info btn-sm" onclick="toggleJobDetails({{ job.id }})">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Posted: {{ job.posted_at.split(' ')[0] if job.posted_at else 'Recently' }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Details (Hidden by default) -->
+                    <div id="jobDetails{{ job.id }}" class="job-details mt-3" style="display: none;">
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Job Description:</h6>
+                                <p class="text-muted">{{ job.description }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Requirements:</h6>
+                                <p class="text-muted">{{ job.requirements }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No jobs found</h4>
+                <p class="text-muted">
+                    {% if session.user_type == 'employer' %}
+                        Be the first to post a job!
+                        <br><br>
+                        <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Post Your First Job
+                        </a>
+                    {% else %}
+                        Check back later for new opportunities or adjust your search criteria.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- No Results Message (Hidden by default) -->
+<div id="noResults" class="row" style="display: none;">
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No jobs match your search</h4>
+            <p class="text-muted">Try adjusting your search criteria or clearing filters.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Helper function to calculate compatibility (JavaScript version)
+function calculateCompatibility(jobSkills, userSkills) {
+    if (!jobSkills || !userSkills) return 0;
+
+    const jobSkillsList = jobSkills.toLowerCase().split(',').map(s => s.trim());
+    const userSkillsList = userSkills.toLowerCase().split(',').map(s => s.trim());
+
+    let matchingSkills = 0;
+    jobSkillsList.forEach(jobSkill => {
+        userSkillsList.forEach(userSkill => {
+            if (jobSkill.includes(userSkill) || userSkill.includes(jobSkill)) {
+                matchingSkills++;
+                return;
+            }
+        });
+    });
+
+    return Math.round((matchingSkills / jobSkillsList.length) * 100);
+}
+
+// Search and filter functionality
+function filterJobs() {
+    const searchTerm = $('#searchTerm').val().toLowerCase();
+    const locationFilter = $('#locationFilter').val().toLowerCase();
+    const jobTypeFilter = $('#jobTypeFilter').val();
+
+    let visibleCount = 0;
+
+    $('.job-card').each(function() {
+        const title = $(this).data('title');
+        const description = $(this).data('description');
+        const skills = $(this).data('skills');
+        const location = $(this).data('location');
+        const type = $(this).data('type');
+
+        let show = true;
+
+        // Search term filter
+        if (searchTerm && !title.includes(searchTerm) && !description.includes(searchTerm) && !skills.includes(searchTerm)) {
+            show = false;
+        }
+
+        // Location filter
+        if (locationFilter && !location.includes(locationFilter)) {
+            show = false;
+        }
+
+        // Job type filter
+        if (jobTypeFilter && type !== jobTypeFilter) {
+            show = false;
+        }
+
+        if (show) {
+            $(this).show();
+            visibleCount++;
+        } else {
+            $(this).hide();
+        }
+    });
+
+    $('#jobsCount').text(visibleCount);
+
+    if (visibleCount === 0) {
+        $('#noResults').show();
+    } else {
+        $('#noResults').hide();
+    }
+}
+
+function clearFilters() {
+    $('#searchTerm').val('');
+    $('#locationFilter').val('');
+    $('#jobTypeFilter').val('');
+    filterJobs();
+}
+
+function toggleJobDetails(jobId) {
+    $('#jobDetails' + jobId).toggle();
+}
+
+$(document).ready(function() {
+    // Bind filter events
+    $('#searchTerm, #locationFilter, #jobTypeFilter').on('input change', filterJobs);
+
+    // Real-time search with debounce
+    let searchTimeout;
+    $('#searchTerm').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterJobs, 300);
+    });
+
+    // Initialize semantic analysis for all job cards
+    initializeSemanticAnalysis();
+
+    // Bind detailed analysis toggle
+    $(document).on('click', '.toggle-details', function() {
+        const jobId = $(this).data('job-id');
+        const detailsDiv = $(this).closest('.semantic-analysis-container').find('.detailed-analysis');
+
+        if (detailsDiv.is(':visible')) {
+            detailsDiv.hide();
+            $(this).html('<i class="fas fa-chart-line me-1"></i>View Detailed Analysis');
+        } else {
+            detailsDiv.show();
+            $(this).html('<i class="fas fa-eye-slash me-1"></i>Hide Detailed Analysis');
+        }
+    });
+});
+
+// Initialize semantic analysis for all job cards
+function initializeSemanticAnalysis() {
+    $('.semantic-analysis-container').each(function() {
+        const container = $(this);
+        const jobId = container.data('job-id');
+        const jobSkills = container.data('job-skills');
+        const userSkills = container.data('user-skills');
+
+        if (jobSkills && userSkills) {
+            performSemanticAnalysis(container, jobSkills, userSkills);
+        } else {
+            // Hide loading and show no analysis available
+            container.find('.semantic-loading').hide();
+            container.find('.semantic-results').html('<small class="text-muted">No skills data available for analysis</small>').show();
+        }
+    });
+}
+
+// Perform semantic analysis for a job
+function performSemanticAnalysis(container, jobSkills, userSkills) {
+    $.ajax({
+        url: '/api/test_similarity',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            job_skills: jobSkills,
+            candidate_skills: userSkills
+        }),
+        success: function(response) {
+            displaySemanticResults(container, response);
+        },
+        error: function(xhr) {
+            console.error('Semantic analysis error:', xhr);
+            container.find('.semantic-loading').hide();
+            container.find('.semantic-results').html('<small class="text-danger">Analysis unavailable</small>').show();
+        }
+    });
+}
+
+// Display semantic analysis results
+function displaySemanticResults(container, response) {
+    const score = response.compatibility_score;
+    const details = response.details;
+
+    // Hide loading
+    container.find('.semantic-loading').hide();
+
+    // Show results
+    const resultsDiv = container.find('.semantic-results');
+    resultsDiv.show();
+
+    // Update compatibility score
+    const scoreText = resultsDiv.find('.score-text');
+    const badge = resultsDiv.find('.compatibility-badge');
+    const progressBar = resultsDiv.find('.compatibility-progress');
+
+    scoreText.text(score + '%');
+    progressBar.css('width', score + '%');
+
+    // Color code based on score
+    badge.removeClass('bg-danger bg-warning bg-info bg-success');
+    progressBar.removeClass('bg-danger bg-warning bg-info bg-success');
+
+    if (score >= 80) {
+        badge.addClass('bg-success');
+        progressBar.addClass('bg-success');
+    } else if (score >= 60) {
+        badge.addClass('bg-info');
+        progressBar.addClass('bg-info');
+    } else if (score >= 40) {
+        badge.addClass('bg-warning');
+        progressBar.addClass('bg-warning');
+    } else {
+        badge.addClass('bg-danger');
+        progressBar.addClass('bg-danger');
+    }
+
+    // Update match breakdown
+    const breakdown = details.match_breakdown;
+    if (breakdown) {
+        const breakdownDiv = resultsDiv.find('.match-breakdown');
+        breakdownDiv.find('.exact-matches').text(breakdown.exact_matches);
+        breakdownDiv.find('.semantic-matches').text(breakdown.semantic_matches);
+        breakdownDiv.find('.missing-skills').text(breakdown.missing_skills);
+        breakdownDiv.find('.coverage-percent').text(Math.round(breakdown.coverage_percentage) + '%');
+        breakdownDiv.show();
+    }
+
+    // Show recommendation alert
+    const alertDiv = resultsDiv.find('.recommendation-alert');
+    let alertClass, alertIcon, alertTitle, alertMessage;
+
+    if (score >= 80) {
+        alertClass = 'alert-success';
+        alertIcon = 'fas fa-thumbs-up';
+        alertTitle = 'Excellent Match!';
+        alertMessage = 'You have most of the required skills. This position is highly recommended for you.';
+    } else if (score >= 60) {
+        alertClass = 'alert-info';
+        alertIcon = 'fas fa-info-circle';
+        alertTitle = 'Good Match';
+        alertMessage = 'You have many relevant skills. Consider applying and highlighting your transferable experience.';
+    } else if (score >= 40) {
+        alertClass = 'alert-warning';
+        alertIcon = 'fas fa-lightbulb';
+        alertTitle = 'Potential Match';
+        alertMessage = 'Some skills overlap. This could be a growth opportunity if you\'re willing to learn.';
+    } else {
+        alertClass = 'alert-secondary';
+        alertIcon = 'fas fa-graduation-cap';
+        alertTitle = 'Learning Opportunity';
+        alertMessage = 'This role offers significant learning potential in new technologies and skills.';
+    }
+
+    alertDiv.html(`
+        <div class="alert ${alertClass} mb-0" role="alert">
+            <i class="${alertIcon} me-1"></i>
+            <strong>${alertTitle}</strong> ${alertMessage}
+        </div>
+    `).show();
+
+    // Show detailed analysis button
+    resultsDiv.find('.toggle-details').show();
+
+    // Populate detailed analysis
+    populateDetailedAnalysis(container, details);
+}
+
+// Populate detailed analysis section
+function populateDetailedAnalysis(container, details) {
+    const detailsDiv = container.find('.detailed-analysis');
+
+    // Matched skills
+    const matchedSkillsList = detailsDiv.find('.matched-skills-list');
+    if (details.matched && details.matched.length > 0) {
+        const matchedHtml = details.matched.map(skill =>
+            `<span class="badge bg-success me-1 mb-1">${skill}</span>`
+        ).join('');
+        matchedSkillsList.html(matchedHtml);
+    } else {
+        matchedSkillsList.html('<small class="text-muted">No exact matches</small>');
+    }
+
+    // Semantic matches
+    const semanticMatchesList = detailsDiv.find('.semantic-matches-list');
+    if (details.semantic_matches && details.semantic_matches.length > 0) {
+        const semanticHtml = details.semantic_matches.map(match =>
+            `<div class="mb-1">
+                <small><strong>${match.required}</strong> ↔ <em>${match.candidate}</em></small>
+            </div>`
+        ).join('');
+        semanticMatchesList.html(semanticHtml);
+    } else {
+        semanticMatchesList.html('<small class="text-muted">No semantic matches</small>');
+    }
+
+    // Missing skills
+    const missingSkillsList = detailsDiv.find('.missing-skills-list');
+    if (details.missing && details.missing.length > 0) {
+        const missingHtml = details.missing.map(skill =>
+            `<span class="badge bg-warning me-1 mb-1">${skill}</span>`
+        ).join('');
+        missingSkillsList.html(missingHtml);
+    } else {
+        missingSkillsList.html('<small class="text-muted">No missing skills</small>');
+    }
+}
+</script>
+{% endblock %}

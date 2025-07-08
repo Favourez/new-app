@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user_info.username }} - Applicant Profile - JobSync{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-user-circle me-2"></i>{{ user_info['username'] }}
+                    <span class="user-type-badge user-type-jobseeker ms-2">Job Seeker</span>
+                </h2>
+                <button class="btn btn-secondary" onclick="window.close()">
+                    <i class="fas fa-times me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ user_info['username'] }}</p>
+                            <p><strong>Email:</strong> {{ user_info['email'] }}</p>
+                            <p><strong>User Type:</strong> {{ user_info['user_type'].title() }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if user_profile and user_profile['resume_filename'] %}
+                                <p><strong>Resume:</strong>
+                                    <a href="{{ url_for('download_cv', applicant_id=user_info['id']) }}"
+                                       class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-download me-1"></i>Download CV
+                                    </a>
+                                </p>
+                            {% else %}
+                                <p><strong>Resume:</strong> <span class="text-muted">Not uploaded</span></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <h4 class="text-primary">{{ applications|length }}</h4>
+                        <small class="text-muted">Applications to Your Jobs</small>
+                    </div>
+                    {% if user_profile and user_profile['skills'] %}
+                        <div class="mb-3">
+                            <h4 class="text-success">{{ user_profile['skills'].split(',')|length }}</h4>
+                            <small class="text-muted">Skills Listed</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skills and Experience -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Skills
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_profile and user_profile['skills'] %}
+                        <div class="skills-container">
+                            {% for skill in user_profile['skills'].split(',') %}
+                                <span class="badge bg-primary me-1 mb-1">{{ skill.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No skills listed</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>Experience
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_profile and user_profile['experience'] %}
+                        <p>{{ user_profile['experience'] }}</p>
+                    {% else %}
+                        <p class="text-muted">No experience information provided</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Education -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>Education
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_profile and user_profile['education'] %}
+                        <p>{{ user_profile['education'] }}</p>
+                    {% else %}
+                        <p class="text-muted">No education information provided</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications to Your Jobs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Applications to Your Jobs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if applications %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Location</th>
+                                        <th>Salary</th>
+                                        <th>Compatibility</th>
+                                        <th>Applied Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app in applications %}
+                                    <tr>
+                                        <td><strong>{{ app.job_title }}</strong></td>
+                                        <td>{{ app.location }}</td>
+                                        <td>{{ app.salary }}</td>
+                                        <td>
+                                            <span class="compatibility-score">
+                                                <i class="fas fa-star me-1"></i>
+                                                {{ app.compatibility_score }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ app.applied_at.split(' ')[0] if app.applied_at else 'Recently' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if app.status == 'pending' %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>Pending
+                                                </span>
+                                            {% elif app.status == 'accepted' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Accepted
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times me-1"></i>Rejected
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Applications</h5>
+                            <p class="text-muted">This candidate hasn't applied to any of your jobs yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.skills-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.compatibility-score {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.user-type-badge {
+    font-size: 0.7em;
+    padding: 0.25em 0.5em;
+    border-radius: 0.25rem;
+}
+
+.user-type-jobseeker {
+    background-color: #28a745;
+    color: white;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+</style>
+{% endblock %}

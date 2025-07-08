@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Step Test - JobSync</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .step-console {
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+        .step-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+        }
+        .step-pending { background-color: #f8f9fa; border-left-color: #6c757d; }
+        .step-running { background-color: #e3f2fd; border-left-color: #2196f3; }
+        .step-success { background-color: #e8f5e8; border-left-color: #4caf50; }
+        .step-error { background-color: #ffebee; border-left-color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-list-ol me-2"></i>Firebase Step-by-Step Test
+                    <span class="badge bg-primary ms-2">Diagnostic Mode</span>
+                </h1>
+                
+                <!-- Test Steps -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Test Steps</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="step1" class="step-item step-pending">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle-notch fa-spin me-2" style="display: none;"></i>
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>Step 1:</strong> Check Firebase CDN
+                                        <span class="ms-auto badge bg-secondary">Pending</span>
+                                    </div>
+                                    <small class="text-muted">Verify Firebase libraries are loaded</small>
+                                </div>
+                                
+                                <div id="step2" class="step-item step-pending">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle-notch fa-spin me-2" style="display: none;"></i>
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>Step 2:</strong> Initialize Firebase App
+                                        <span class="ms-auto badge bg-secondary">Pending</span>
+                                    </div>
+                                    <small class="text-muted">Initialize Firebase with project configuration</small>
+                                </div>
+                                
+                                <div id="step3" class="step-item step-pending">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle-notch fa-spin me-2" style="display: none;"></i>
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>Step 3:</strong> Connect to Firestore
+                                        <span class="ms-auto badge bg-secondary">Pending</span>
+                                    </div>
+                                    <small class="text-muted">Establish database connection</small>
+                                </div>
+                                
+                                <div id="step4" class="step-item step-pending">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle-notch fa-spin me-2" style="display: none;"></i>
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>Step 4:</strong> Test Write Operation
+                                        <span class="ms-auto badge bg-secondary">Pending</span>
+                                    </div>
+                                    <small class="text-muted">Write test document to Firestore</small>
+                                </div>
+                                
+                                <div id="step5" class="step-item step-pending">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle-notch fa-spin me-2" style="display: none;"></i>
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>Step 5:</strong> Test Read Operation
+                                        <span class="ms-auto badge bg-secondary">Pending</span>
+                                    </div>
+                                    <small class="text-muted">Read documents from Firestore</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Test Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <button class="btn btn-primary w-100" onclick="runManualTest()" id="testBtn">
+                                        <i class="fas fa-play me-1"></i>Run Manual Test
+                                    </button>
+                                </div>
+                                
+                                <div class="mb-3" id="postTestSection" style="display: none;">
+                                    <hr>
+                                    <h6>Test News Feed Post</h6>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="testPostContent" 
+                                               placeholder="Enter test post content..." 
+                                               value="Hello from JobSync! Testing Firebase connection.">
+                                        <button class="btn btn-success" onclick="testCreatePost()">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <button class="btn btn-outline-info btn-sm w-100" onclick="testLoadPosts()">
+                                        <i class="fas fa-eye me-1"></i>Load Posts
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <a href="/newsfeed" class="btn btn-outline-primary">
+                                        <i class="fas fa-arrow-left me-1"></i>Back to News Feed
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Console -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Detailed Console</h5>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="clearStepConsole()">
+                                    <i class="fas fa-trash me-1"></i>Clear
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="step-console" id="step-console">
+                                    <div>Firebase Step-by-Step Test Console - JobSync</div>
+                                    <div>Waiting for test to start...</div>
+                                    <div>---</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/firebase-step-test.js') }}"></script>
+    
+    <script>
+        let workingService = null;
+        
+        function stepLog(message, type = 'info') {
+            const console = document.getElementById('step-console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : type === 'warning' ? '#ffd43b' : '#00ff00';
+            console.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        function updateStepStatus(step, success, error = null) {
+            const stepMap = {
+                'cdnLoaded': 'step1',
+                'appInitialized': 'step2', 
+                'firestoreConnected': 'step3',
+                'testWriteSuccess': 'step4',
+                'testReadSuccess': 'step5'
+            };
+            
+            const stepId = stepMap[step];
+            if (!stepId) return;
+            
+            const stepEl = document.getElementById(stepId);
+            const spinner = stepEl.querySelector('.fa-spin');
+            const icon = stepEl.querySelector('.fa-clock');
+            const badge = stepEl.querySelector('.badge');
+            
+            if (success) {
+                stepEl.className = 'step-item step-success';
+                spinner.style.display = 'none';
+                icon.className = 'fas fa-check-circle me-2 text-success';
+                badge.className = 'ms-auto badge bg-success';
+                badge.textContent = 'Success';
+            } else {
+                stepEl.className = 'step-item step-error';
+                spinner.style.display = 'none';
+                icon.className = 'fas fa-times-circle me-2 text-danger';
+                badge.className = 'ms-auto badge bg-danger';
+                badge.textContent = 'Failed';
+                
+                if (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'mt-2 small text-danger';
+                    errorDiv.textContent = `Error: ${error}`;
+                    stepEl.appendChild(errorDiv);
+                }
+            }
+        }
+        
+        function clearStepConsole() {
+            document.getElementById('step-console').innerHTML = `
+                <div>Firebase Step-by-Step Test Console - JobSync</div>
+                <div>Console cleared</div>
+                <div>---</div>
+            `;
+        }
+        
+        function runManualTest() {
+            stepLog('🚀 Starting manual Firebase test...', 'info');
+            
+            // Reset all steps
+            for (let i = 1; i <= 5; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.className = 'step-item step-running';
+                const spinner = stepEl.querySelector('.fa-spin');
+                const badge = stepEl.querySelector('.badge');
+                spinner.style.display = 'inline-block';
+                badge.className = 'ms-auto badge bg-primary';
+                badge.textContent = 'Running';
+            }
+            
+            // The step test will run automatically
+        }
+        
+        async function testCreatePost() {
+            if (!workingService) {
+                stepLog('❌ Working service not available', 'error');
+                return;
+            }
+            
+            const content = document.getElementById('testPostContent').value.trim();
+            if (!content) {
+                stepLog('❌ Please enter post content', 'error');
+                return;
+            }
+            
+            try {
+                const postData = {
+                    authorId: '{{ session.user_id }}',
+                    authorName: '{{ session.username }}',
+                    authorType: '{{ session.user_type }}',
+                    content: content,
+                    type: 'original',
+                    mediaUrls: []
+                };
+                
+                const result = await workingService.createPost(postData);
+                
+                if (result.success) {
+                    stepLog(`✅ News feed post created: ${result.id}`, 'success');
+                    document.getElementById('testPostContent').value = '';
+                } else {
+                    stepLog(`❌ Failed to create post: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                stepLog(`❌ Error creating post: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLoadPosts() {
+            if (!workingService) {
+                stepLog('❌ Working service not available', 'error');
+                return;
+            }
+            
+            try {
+                const result = await workingService.getPosts(5);
+                
+                if (result.success) {
+                    stepLog(`✅ Loaded ${result.data.length} posts from news feed`, 'success');
+                    result.data.forEach((post, index) => {
+                        const preview = post.content.length > 40 ? post.content.substring(0, 40) + '...' : post.content;
+                        stepLog(`📄 ${index + 1}. "${preview}" by ${post.authorName}`, 'info');
+                    });
+                } else {
+                    stepLog(`❌ Failed to load posts: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                stepLog(`❌ Error loading posts: ${error.message}`, 'error');
+            }
+        }
+        
+        // Monitor for working service
+        const serviceCheckInterval = setInterval(() => {
+            if (window.firebaseStepTestReady === true) {
+                clearInterval(serviceCheckInterval);
+                workingService = window.workingFirebaseService;
+                stepLog('🎉 Working Firebase service is ready!', 'success');
+                document.getElementById('postTestSection').style.display = 'block';
+            } else if (window.firebaseStepTestReady === false) {
+                clearInterval(serviceCheckInterval);
+                stepLog('❌ Firebase step test failed', 'error');
+            }
+        }, 1000);
+        
+        // Make functions available globally
+        window.stepLog = stepLog;
+        window.updateStepStatus = updateStepStatus;
+        
+        // Initial log
+        stepLog('🚀 Step test console initialized', 'info');
+        stepLog('⏳ Waiting for Firebase CDN and automatic test...', 'info');
+    </script>
+</body>
+</html>

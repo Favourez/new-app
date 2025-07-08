@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Email Notifications Log - JobSync{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-envelope me-2"></i>Email Notifications Log</h2>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Demo Mode:</strong> This shows email notifications that would be sent in a production environment. 
+                In this demo, emails are logged here instead of being sent to actual email addresses.
+            </div>
+
+            {% if emails %}
+                {% for email in emails %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-envelope me-2"></i>{{ email.subject }}
+                        </h6>
+                        <small class="text-muted">{{ email.timestamp }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <strong>To:</strong> {{ email.to }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Type:</strong> 
+                                {% if 'Job Posted' in email.subject %}
+                                    <span class="badge bg-success">Job Posted</span>
+                                {% elif 'Application Submitted' in email.subject %}
+                                    <span class="badge bg-primary">Application Confirmation</span>
+                                {% elif 'New Application' in email.subject %}
+                                    <span class="badge bg-warning">New Application Alert</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">General</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="email-body">
+                            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{{ email.body }}</pre>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Email Notifications Yet</h4>
+                    <p class="text-muted">
+                        Email notifications will appear here when:
+                        <br>• Employers post new jobs
+                        <br>• Job seekers apply for positions
+                        <br>• Applications are received by employers
+                    </p>
+                    <div class="mt-4">
+                        {% if session.user_type == 'employer' %}
+                            <a href="{{ url_for('post_job') }}" class="btn btn-primary me-2">
+                                <i class="fas fa-plus me-1"></i>Post a Job
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('jobs') }}" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Browse Jobs
+                            </a>
+                        {% endif %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.email-body {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    border-radius: 0 5px 5px 0;
+    margin-top: 10px;
+}
+
+.card-header {
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}

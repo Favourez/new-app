@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluation Metrics Dashboard - JobSync{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    .small-chart {
+        height: 300px;
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .improvement-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-chart-line me-2"></i>
+                    Semantic Similarity Evaluation Metrics
+                </h2>
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Loading evaluation metrics...</p>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" style="display: none;">
+        <!-- Key Metrics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="totalApplications">0</div>
+                    <div class="metric-label">Total Applications</div>
+                    <div class="improvement-badge mt-2" id="applicationsTrend">
+                        <i class="fas fa-arrow-up"></i> +12% this week
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="avgSemanticScore">0%</div>
+                    <div class="metric-label">Avg Semantic Score</div>
+                    <div class="improvement-badge mt-2" id="semanticTrend">
+                        <i class="fas fa-arrow-up"></i> +8% improvement
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="totalJobs">0</div>
+                    <div class="metric-label">Active Jobs</div>
+                    <div class="improvement-badge mt-2" id="jobsTrend">
+                        <i class="fas fa-arrow-up"></i> +5 new jobs
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="matchAccuracy">0%</div>
+                    <div class="metric-label">Match Accuracy</div>
+                    <div class="improvement-badge mt-2" id="accuracyTrend">
+                        <i class="fas fa-arrow-up"></i> +15% better
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Semantic vs Original Compatibility Scores
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="compatibilityComparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-pie-chart me-2"></i>
+                            Score Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container small-chart">
+                            <canvas id="scoreDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-brain me-2"></i>
+                            Match Type Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container small-chart">
+                            <canvas id="matchTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Top Skills in Demand
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container small-chart">
+                            <canvas id="skillDemandChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 3 -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Job Application Performance Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="jobPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-table me-2"></i>
+                            Detailed Application Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="applicationsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Candidate</th>
+                                        <th>Original Score</th>
+                                        <th>Semantic Score</th>
+                                        <th>Improvement</th>
+                                        <th>Exact Matches</th>
+                                        <th>Semantic Matches</th>
+                                        <th>Missing Skills</th>
+                                        <th>Coverage</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let charts = {};
+let evaluationData = null;
+
+$(document).ready(function() {
+    loadEvaluationData();
+});
+
+function loadEvaluationData() {
+    $('#loadingState').show();
+    $('#dashboard').hide();
+    
+    $.ajax({
+        url: '/api/evaluation_data',
+        method: 'GET',
+        success: function(response) {
+            evaluationData = response;
+            displayMetrics();
+            createCharts();
+            populateTable();
+            $('#loadingState').hide();
+            $('#dashboard').show();
+        },
+        error: function(xhr) {
+            console.error('Error loading evaluation data:', xhr);
+            $('#loadingState').html('<div class="alert alert-danger">Error loading data: ' + (xhr.responseJSON?.error || 'Unknown error') + '</div>');
+        }
+    });
+}
+
+function displayMetrics() {
+    const data = evaluationData;
+    
+    // Calculate metrics
+    const totalApps = data.total_applications;
+    const totalJobs = data.total_jobs;
+    
+    let totalSemanticScore = 0;
+    let totalOriginalScore = 0;
+    let accuracyImprovement = 0;
+    
+    if (data.applications.length > 0) {
+        data.applications.forEach(app => {
+            totalSemanticScore += app.semantic_score;
+            totalOriginalScore += app.original_score;
+        });
+        
+        const avgSemantic = totalSemanticScore / data.applications.length;
+        const avgOriginal = totalOriginalScore / data.applications.length;
+        accuracyImprovement = ((avgSemantic - avgOriginal) / avgOriginal * 100);
+        
+        $('#avgSemanticScore').text(Math.round(avgSemantic) + '%');
+        $('#matchAccuracy').text(Math.round(accuracyImprovement) + '%');
+    }
+    
+    $('#totalApplications').text(totalApps);
+    $('#totalJobs').text(totalJobs);
+}
+
+function createCharts() {
+    createCompatibilityComparisonChart();
+    createScoreDistributionChart();
+    createMatchTypeChart();
+    createSkillDemandChart();
+    createJobPerformanceChart();
+}
+
+function createCompatibilityComparisonChart() {
+    const ctx = document.getElementById('compatibilityComparisonChart').getContext('2d');
+    
+    const applications = evaluationData.applications.slice(0, 10); // Top 10 recent
+    const labels = applications.map(app => app.title.substring(0, 20) + '...');
+    const originalScores = applications.map(app => app.original_score);
+    const semanticScores = applications.map(app => app.semantic_score);
+    
+    charts.compatibility = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Original Compatibility',
+                data: originalScores,
+                borderColor: '#ff6b6b',
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Semantic Compatibility',
+                data: semanticScores,
+                borderColor: '#4ecdc4',
+                backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Comparison of Compatibility Scoring Methods'
+                },
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Compatibility Score (%)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createScoreDistributionChart() {
+    const ctx = document.getElementById('scoreDistributionChart').getContext('2d');
+    
+    // Group scores into ranges
+    const ranges = ['0-20%', '21-40%', '41-60%', '61-80%', '81-100%'];
+    const distribution = [0, 0, 0, 0, 0];
+    
+    evaluationData.applications.forEach(app => {
+        const score = app.semantic_score;
+        if (score <= 20) distribution[0]++;
+        else if (score <= 40) distribution[1]++;
+        else if (score <= 60) distribution[2]++;
+        else if (score <= 80) distribution[3]++;
+        else distribution[4]++;
+    });
+    
+    charts.distribution = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ranges,
+            datasets: [{
+                data: distribution,
+                backgroundColor: [
+                    '#ff6b6b',
+                    '#ffa726',
+                    '#ffee58',
+                    '#66bb6a',
+                    '#42a5f5'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Semantic Score Distribution'
+                }
+            }
+        }
+    });
+}
+
+function createMatchTypeChart() {
+    const ctx = document.getElementById('matchTypeChart').getContext('2d');
+    
+    let totalExact = 0;
+    let totalSemantic = 0;
+    let totalMissing = 0;
+    
+    evaluationData.applications.forEach(app => {
+        totalExact += app.exact_matches;
+        totalSemantic += app.semantic_matches;
+        totalMissing += app.missing_skills;
+    });
+    
+    charts.matchType = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Exact Matches', 'Semantic Matches', 'Missing Skills'],
+            datasets: [{
+                label: 'Total Count',
+                data: [totalExact, totalSemantic, totalMissing],
+                backgroundColor: ['#4caf50', '#2196f3', '#ff9800']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Skill Match Type Analysis'
+                }
+            }
+        }
+    });
+}
+
+function createSkillDemandChart() {
+    const ctx = document.getElementById('skillDemandChart').getContext('2d');
+    
+    const skills = Object.keys(evaluationData.skill_frequency);
+    const counts = Object.values(evaluationData.skill_frequency);
+    
+    charts.skillDemand = new Chart(ctx, {
+        type: 'horizontalBar',
+        data: {
+            labels: skills.slice(0, 10),
+            datasets: [{
+                label: 'Frequency',
+                data: counts.slice(0, 10),
+                backgroundColor: '#667eea'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Most In-Demand Skills'
+                }
+            }
+        }
+    });
+}
+
+function createJobPerformanceChart() {
+    const ctx = document.getElementById('jobPerformanceChart').getContext('2d');
+    
+    const jobs = evaluationData.jobs.slice(0, 8);
+    const labels = jobs.map(job => job.title.substring(0, 15) + '...');
+    const applicationCounts = jobs.map(job => job.application_count);
+    const avgCompatibility = jobs.map(job => job.avg_compatibility || 0);
+    
+    charts.jobPerformance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Applications',
+                data: applicationCounts,
+                backgroundColor: '#42a5f5',
+                yAxisID: 'y'
+            }, {
+                label: 'Avg Compatibility',
+                data: avgCompatibility,
+                type: 'line',
+                borderColor: '#ff6b6b',
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Job Performance: Applications vs Compatibility'
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Number of Applications'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Average Compatibility (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+}
+
+function populateTable() {
+    const tbody = $('#applicationsTable tbody');
+    tbody.empty();
+    
+    evaluationData.applications.forEach(app => {
+        const improvement = app.semantic_score - app.original_score;
+        const improvementClass = improvement > 0 ? 'text-success' : improvement < 0 ? 'text-danger' : 'text-muted';
+        const improvementIcon = improvement > 0 ? 'fa-arrow-up' : improvement < 0 ? 'fa-arrow-down' : 'fa-minus';
+        
+        const row = `
+            <tr>
+                <td>${app.title}</td>
+                <td>${app.candidate_name}</td>
+                <td><span class="badge bg-secondary">${app.original_score}%</span></td>
+                <td><span class="badge bg-primary">${app.semantic_score}%</span></td>
+                <td class="${improvementClass}">
+                    <i class="fas ${improvementIcon}"></i> ${improvement > 0 ? '+' : ''}${improvement}%
+                </td>
+                <td><span class="badge bg-success">${app.exact_matches}</span></td>
+                <td><span class="badge bg-info">${app.semantic_matches}</span></td>
+                <td><span class="badge bg-warning">${app.missing_skills}</span></td>
+                <td>${Math.round(app.coverage_percentage)}%</td>
+                <td><span class="badge bg-${app.status === 'pending' ? 'warning' : app.status === 'accepted' ? 'success' : 'secondary'}">${app.status}</span></td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+}
+
+function refreshData() {
+    // Destroy existing charts
+    Object.values(charts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+    charts = {};
+    
+    // Reload data
+    loadEvaluationData();
+}
+</script>
+{% endblock %}

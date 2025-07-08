@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Home - JobSync{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row align-items-center py-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold text-dark mb-4">
+            Find Your Dream Job or Perfect Candidate
+        </h1>
+        <p class="lead text-muted mb-4">
+            Sync your career with the perfect opportunity! Our intelligent matching system connects
+            jobseekers with employers through AI-powered compatibility scoring and real-time communication.
+        </p>
+        {% if not session.user_id %}
+        <div class="d-flex gap-3">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Get Started
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </a>
+        </div>
+        {% else %}
+        <div class="d-flex gap-3">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+            </a>
+            <a href="{{ url_for('jobs') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-search me-2"></i>Browse Jobs
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-lg-6 text-center">
+        <div class="position-relative">
+            <i class="fas fa-users display-1 text-primary opacity-25"></i>
+            <i class="fas fa-handshake position-absolute top-50 start-50 translate-middle display-3 text-success"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row py-5">
+    <div class="col-12 text-center mb-5">
+        <h2 class="fw-bold">Why Choose JobSync?</h2>
+        <p class="text-muted">Discover the features that sync you with success</p>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100 text-center border-0 shadow-sm">
+            <div class="card-body">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-users fa-2x text-primary"></i>
+                </div>
+                <h5 class="card-title">Dual User Types</h5>
+                <p class="card-text text-muted">
+                    Separate dashboards for jobseekers and employers with tailored features for each user type.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100 text-center border-0 shadow-sm">
+            <div class="card-body">
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-file-alt fa-2x text-success"></i>
+                </div>
+                <h5 class="card-title">Smart Resume Parsing</h5>
+                <p class="card-text text-muted">
+                    AI-powered resume analysis extracts skills and experience automatically from uploaded documents.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100 text-center border-0 shadow-sm">
+            <div class="card-body">
+                <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-chart-line fa-2x text-warning"></i>
+                </div>
+                <h5 class="card-title">Compatibility Scoring</h5>
+                <p class="card-text text-muted">
+                    Get matched with jobs based on your skills and experience level with percentage scores.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card h-100 text-center border-0 shadow-sm">
+            <div class="card-body">
+                <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-comments fa-2x text-info"></i>
+                </div>
+                <h5 class="card-title">Real-time Chat</h5>
+                <p class="card-text text-muted">
+                    Connect and communicate with other users through our integrated chat system.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How it Works Section -->
+<div class="row py-5 bg-white rounded shadow-sm">
+    <div class="col-12 text-center mb-5">
+        <h2 class="fw-bold">How It Works</h2>
+        <p class="text-muted">Simple steps to get started</p>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h3 class="text-primary mb-4">
+            <i class="fas fa-user-tie me-2"></i>For Jobseekers
+        </h3>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">1</small>
+            </div>
+            <p class="mb-0">Create your account and complete your profile</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">2</small>
+            </div>
+            <p class="mb-0">Upload your resume for automatic skill extraction</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">3</small>
+            </div>
+            <p class="mb-0">Browse jobs and get compatibility scores</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">4</small>
+            </div>
+            <p class="mb-0">Apply to jobs and receive email confirmations</p>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h3 class="text-success mb-4">
+            <i class="fas fa-building me-2"></i>For Employers
+        </h3>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">1</small>
+            </div>
+            <p class="mb-0">Register your company and set up your profile</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">2</small>
+            </div>
+            <p class="mb-0">Post job listings with required skills</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">3</small>
+            </div>
+            <p class="mb-0">Review applications with compatibility scores</p>
+        </div>
+        <div class="d-flex align-items-start mb-3">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px; min-width: 30px;">
+                <small class="fw-bold">4</small>
+            </div>
+            <p class="mb-0">Connect with candidates through chat</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row py-5 text-center">
+    <div class="col-md-3 mb-3">
+        <h3 class="display-6 fw-bold text-primary">500+</h3>
+        <p class="text-muted">Active Jobs</p>
+    </div>
+    <div class="col-md-3 mb-3">
+        <h3 class="display-6 fw-bold text-success">1000+</h3>
+        <p class="text-muted">Registered Users</p>
+    </div>
+    <div class="col-md-3 mb-3">
+        <h3 class="display-6 fw-bold text-warning">200+</h3>
+        <p class="text-muted">Companies</p>
+    </div>
+    <div class="col-md-3 mb-3">
+        <h3 class="display-6 fw-bold text-info">95%</h3>
+        <p class="text-muted">Success Rate</p>
+    </div>
+</div>
+{% endblock %}
